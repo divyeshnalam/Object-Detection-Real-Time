@@ -2,9 +2,10 @@ import streamlit as st
 import cv2
 import torch
 import numpy as np
+from streamlit_webrtc import VideoTransformerBase, webrtc_streamer, WebRtcMode
 
 # Path to the YOLOv5 model weights
-model_path = 'best.pt'
+model_path = 'E:/odm/best.pt'
 
 # Load the YOLOv5 model
 @st.cache_resource
@@ -14,57 +15,31 @@ def load_model():
 
 model = load_model()
 
-# Function to process video frames and perform detection
-def process_frame(frame):
-    results = model(frame)
-    frame = np.squeeze(results.render())
-    return frame
+# Video transformer using streamlit-webrtc
+class YOLOv5VideoTransformer(VideoTransformerBase):
+    def __init__(self):
+        self.model = model
+
+    def transform(self, frame):
+        img = frame.to_ndarray(format="bgr24")
+        
+        # Perform object detection
+        results = self.model(img)
+        img = np.squeeze(results.render())
+        
+        return img
 
 # Streamlit app
 def main():
     st.title("Real-Time Object Detection with YOLOv5")
 
-    # Initialize variables for start and stop detection
-    start_detection = st.button("Start Detection")
-    stop_detection = st.button("Stop Detection")
-
-    # Initialize video capture
-    cap = cv2.VideoCapture(0)
-    stframe = st.empty()
-
-    detecting = False
-
-    while True:
-        if start_detection:
-            detecting = True
-
-        if stop_detection:
-            detecting = False
-
-        if detecting:
-            ret, frame = cap.read()
-            if not ret:
-                st.write("Failed to capture video")
-                break
-
-            # Resize frame
-            frame = cv2.resize(frame, (1020, 700))
-
-            # Process the frame for detection
-            frame = process_frame(frame)
-
-            # Convert BGR to RGB
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-            # Display the frame in Streamlit
-            stframe.image(frame, channels="RGB", use_column_width=True)
-
-        # Break the loop if the 'Esc' key is pressed
-        if cv2.waitKey(1) & 0xFF == 27:
-            break
-
-    cap.release()
-    cv2.destroyAllWindows()
+    webrtc_ctx = webrtc_streamer(
+        key="example",
+        mode=WebRtcMode.SENDRECV,
+        video_transformer_factory=YOLOv5VideoTransformer,
+        media_stream_constraints={"video": True, "audio": False},
+        async_transform=True,
+    )
 
 if __name__ == "__main__":
     main()
