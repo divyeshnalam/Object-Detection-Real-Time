@@ -4,7 +4,7 @@ import torch
 import numpy as np
 
 # Path to the YOLOv5 model weights
-model_path = 'E:/odm/best.pt'
+model_path = 'best.pt'
 
 # Load the YOLOv5 model
 @st.cache_resource
