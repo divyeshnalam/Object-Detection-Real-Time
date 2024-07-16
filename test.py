@@ -5,7 +5,7 @@ import numpy as np
 from streamlit_webrtc import VideoTransformerBase, webrtc_streamer, WebRtcMode
 
 # Path to the YOLOv5 model weights
-model_path = 'E:/odm/best.pt'
+model_path = 'best.pt'
 
 # Load the YOLOv5 model
 @st.cache_resource
